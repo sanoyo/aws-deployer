@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -30,7 +29,6 @@ to quickly create a Cobra application.`,
 
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			log.Fatal(err)
 			return err
 		}
 
@@ -42,7 +40,6 @@ to quickly create a Cobra application.`,
 			Bucket: aws.String("my-bucket"),
 		})
 		if err != nil {
-			log.Fatal(err)
 			return err
 		}
 
