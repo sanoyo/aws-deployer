@@ -31,6 +31,7 @@ to quickly create a Cobra application.`,
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
 			log.Fatal(err)
+			return err
 		}
 
 		// Create an Amazon S3 service client
@@ -42,6 +43,7 @@ to quickly create a Cobra application.`,
 		})
 		if err != nil {
 			log.Fatal(err)
+			return err
 		}
 
 		fmt.Println("output", output)
