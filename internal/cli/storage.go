@@ -32,9 +32,7 @@ func BuildStorageCommand() *cobra.Command {
 		Cobra is a CLI library for Go that empowers applications.
 		This application is a tool to generate the needed files
 		to quickly create a Cobra application.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args)
-		},
+		RunE: run,
 	}
 
 	cmd.Flags().StringP("yaml", "y", "", "Specify yaml file")
@@ -44,6 +42,8 @@ func BuildStorageCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	ctx := context.TODO()
+
 	// ファイルを読み込む
 	filePath, err := cmd.Flags().GetString("yaml")
 	if err != nil {
@@ -62,14 +62,14 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	// yamlファイルに読み込み
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return err
 	}
 	client := s3.NewFromConfig(cfg)
 
 	output, err := client.CreateBucket(
-		context.TODO(),
+		ctx,
 		&s3.CreateBucketInput{
 			Bucket: aws.String(s3Ops.BucketName),
 			CreateBucketConfiguration: &types.CreateBucketConfiguration{
