@@ -1,3 +1,2 @@
-apiVersion: v1
 kind: S3
-name: sample
+name: sanosamplesano
