@@ -36,7 +36,7 @@ func BuildStorageCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("yaml", "y", "", "Specify yaml file")
-	cmd.MarkFlagRequired("yaml")
+	cmd.Flags().BoolP("generate", "g", false, "generate yaml file")
 
 	return cmd
 }
@@ -44,12 +44,24 @@ func BuildStorageCommand() *cobra.Command {
 func run(cmd *cobra.Command, args []string) error {
 	ctx := context.TODO()
 
+	ok, err := cmd.Flags().GetBool("generate")
+	if err != nil {
+		return err
+	}
+	if ok {
+		return generateStorageYaml(cmd)
+	}
+
 	// ファイルを読み込む
 	filePath, err := cmd.Flags().GetString("yaml")
 	if err != nil {
 		return err
 	}
 
+	return createS3Bucket(ctx, filePath)
+}
+
+func createS3Bucket(ctx context.Context, filePath string) error {
 	b, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -82,6 +94,27 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("output", output)
+
+	return nil
+}
+
+func generateStorageYaml(cmd *cobra.Command) error {
+	// TODO: kindとバケット名を指定できるようにする
+	s3Ops := S3Ops{
+		Kind:       "S3",
+		BucketName: "test-bucket",
+	}
+
+	b, err := yaml.Marshal(s3Ops)
+	if err != nil {
+		return err
+	}
+
+	// TODO: ファイル名を指定できるようにする
+	err = os.WriteFile("storage.yaml", b, 0644)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
