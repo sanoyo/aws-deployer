@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -80,7 +81,7 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 	}
 	client := s3.NewFromConfig(cfg)
 
-	output, err := client.CreateBucket(
+	_, err = client.CreateBucket(
 		ctx,
 		&s3.CreateBucketInput{
 			Bucket: aws.String(s3Ops.BucketName),
@@ -93,16 +94,39 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 		return err
 	}
 
-	fmt.Println("output", output)
-
 	return nil
 }
 
 func generateStorageYaml(cmd *cobra.Command) error {
-	// TODO: kindとバケット名を指定できるようにする
+
+	var qs = []*survey.Question{
+		{
+			Name:      "storage_name",
+			Prompt:    &survey.Input{Message: "Please input storage name?"},
+			Validate:  survey.Required,
+			Transform: survey.ToLower,
+		},
+		{
+			Name:      "file_name",
+			Prompt:    &survey.Input{Message: "Please input output file name?"},
+			Validate:  survey.Required,
+			Transform: survey.ToLower,
+		},
+	}
+
+	answers := struct {
+		StorageName string `survey:"storage_name"`
+		FileName    string `survey:"file_name"`
+	}{}
+
+	err := survey.Ask(qs, &answers)
+	if err != nil {
+		return err
+	}
+
 	s3Ops := S3Ops{
 		Kind:       "S3",
-		BucketName: "test-bucket",
+		BucketName: answers.StorageName,
 	}
 
 	b, err := yaml.Marshal(s3Ops)
@@ -110,8 +134,7 @@ func generateStorageYaml(cmd *cobra.Command) error {
 		return err
 	}
 
-	// TODO: ファイル名を指定できるようにする
-	err = os.WriteFile("storage.yaml", b, 0644)
+	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0644)
 	if err != nil {
 		return err
 	}
