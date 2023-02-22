@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -105,13 +104,13 @@ func generateStorageYaml(cmd *cobra.Command) error {
 			Name:      "storage_name",
 			Prompt:    &survey.Input{Message: "Please input storage name?"},
 			Validate:  survey.Required,
-			Transform: survey.Title,
+			Transform: survey.ToLower,
 		},
 		{
 			Name:      "file_name",
 			Prompt:    &survey.Input{Message: "Please input output file name?"},
 			Validate:  survey.Required,
-			Transform: survey.Title,
+			Transform: survey.ToLower,
 		},
 	}
 
@@ -127,7 +126,7 @@ func generateStorageYaml(cmd *cobra.Command) error {
 
 	s3Ops := S3Ops{
 		Kind:       "S3",
-		BucketName: strings.ToLower(answers.StorageName),
+		BucketName: answers.StorageName,
 	}
 
 	b, err := yaml.Marshal(s3Ops)
@@ -135,7 +134,7 @@ func generateStorageYaml(cmd *cobra.Command) error {
 		return err
 	}
 
-	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", strings.ToLower(answers.FileName)), b, 0644)
+	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0644)
 	if err != nil {
 		return err
 	}
