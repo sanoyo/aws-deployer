@@ -1,6 +1,5 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cli
 
@@ -10,10 +9,11 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/sanoyo/aws-deployer/internal/session"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -74,20 +74,17 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 		return err
 	}
 
-	// yamlファイルに読み込み
-	cfg, err := config.LoadDefaultConfig(ctx)
+	// 認証情報を取得
+	session, err := session.NewProvider().Default()
 	if err != nil {
 		return err
 	}
-	client := s3.NewFromConfig(cfg)
+	client := s3.New(session)
 
-	_, err = client.CreateBucket(
+	_, err = client.CreateBucketWithContext(
 		ctx,
 		&s3.CreateBucketInput{
 			Bucket: aws.String(s3Ops.BucketName),
-			CreateBucketConfiguration: &types.CreateBucketConfiguration{
-				LocationConstraint: types.BucketLocationConstraint(cfg.Region),
-			},
 		},
 	)
 	if err != nil {
