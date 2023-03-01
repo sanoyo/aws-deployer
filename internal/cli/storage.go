@@ -9,11 +9,9 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
-
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -95,7 +93,6 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 }
 
 func generateStorageYaml(cmd *cobra.Command) error {
-
 	var qs = []*survey.Question{
 		{
 			Name:      "storage_name",
@@ -131,7 +128,7 @@ func generateStorageYaml(cmd *cobra.Command) error {
 		return err
 	}
 
-	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0644)
+	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0o644)
 	if err != nil {
 		return err
 	}
