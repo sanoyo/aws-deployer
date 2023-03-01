@@ -12,7 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/sanoyo/aws-deployer/internal/session"
+	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -74,12 +74,12 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 		return err
 	}
 
-	// 認証情報を取得
-	session, err := session.NewProvider().Default()
+	// TODO: ここを共通化する
+	session, err := internalAws.NewProvider().Default()
 	if err != nil {
 		return err
 	}
-	client := s3.New(session)
+	client := internalAws.New(session)
 
 	_, err = client.CreateBucketWithContext(
 		ctx,
