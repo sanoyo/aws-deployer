@@ -16,16 +16,12 @@ type S3 struct {
 	s3Client s3API
 }
 
-func New(s *session.Session) *S3 {
+func NewStorage(s *session.Session) *S3 {
 	return &S3{
 		s3Client: s3.New(s),
 	}
 }
 
 func (s *S3) CreateBucketWithContext(ctx context.Context, input *s3.CreateBucketInput, opts ...request.Option) (*s3.CreateBucketOutput, error) {
-	res, err := s.s3Client.CreateBucketWithContext(ctx, input, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return s.s3Client.CreateBucketWithContext(ctx, input, opts...)
 }

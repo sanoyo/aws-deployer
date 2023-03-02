@@ -77,7 +77,7 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	client := internalAws.New(session)
+	client := internalAws.NewStorage(session)
 
 	_, err = client.CreateBucketWithContext(
 		ctx,
