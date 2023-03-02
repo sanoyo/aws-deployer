@@ -1,0 +1,41 @@
+run:
+  timeout: 5m
+
+linters-settings:
+  govet:
+    # 未宣言の変数を検出
+    check-shadowing: true
+    # 未使用のパッケージを検出
+    unused: true
+  golint:
+    # コードにGoのコーディング規約に反する箇所がないか検出
+    min-confidence: 0
+  gosimple:
+    # シンプルな代替案がある場合にコードをシンプルにする提案を検出
+    suggestions: true
+  staticcheck:
+    # 不正な表記法を検出
+    invalid-printf-format: true
+    # ゼロの除算を検出
+    divs-by-zero: true
+    # 不要なタイプアサーションを検出
+    unnecessary-else: true
+    # グローバル変数を検出
+    detect-globals: true
+    # 推奨されないGoの機能を検出
+    govet: true
+  misspell:
+    # スペルミスを検出
+    locale: "US"
+  unconvert:
+    # 意味のない型変換を検出
+    enabled: true
+  unused:
+    # 未使用の変数を検出
+    skip-tests: true
+
+linters:
+  enable-all: true
+  disable:
+    # テスト関数内のドキュメンテーションコメントについてのガイドラインを無効化
+    - testpackage

@@ -1,6 +1,5 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cli
 
@@ -10,10 +9,9 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -74,20 +72,17 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 		return err
 	}
 
-	// yamlファイルに読み込み
-	cfg, err := config.LoadDefaultConfig(ctx)
+	// TODO: ここを共通化する
+	session, err := internalAws.NewProvider().Default()
 	if err != nil {
 		return err
 	}
-	client := s3.NewFromConfig(cfg)
+	client := internalAws.NewStorage(session)
 
-	_, err = client.CreateBucket(
+	_, err = client.CreateBucketWithContext(
 		ctx,
 		&s3.CreateBucketInput{
 			Bucket: aws.String(s3Ops.BucketName),
-			CreateBucketConfiguration: &types.CreateBucketConfiguration{
-				LocationConstraint: types.BucketLocationConstraint(cfg.Region),
-			},
 		},
 	)
 	if err != nil {
@@ -98,7 +93,6 @@ func createS3Bucket(ctx context.Context, filePath string) error {
 }
 
 func generateStorageYaml(cmd *cobra.Command) error {
-
 	var qs = []*survey.Question{
 		{
 			Name:      "storage_name",
@@ -134,7 +128,7 @@ func generateStorageYaml(cmd *cobra.Command) error {
 		return err
 	}
 
-	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0644)
+	err = os.WriteFile(fmt.Sprintf("./output/%s.yaml", answers.FileName), b, 0o644)
 	if err != nil {
 		return err
 	}
