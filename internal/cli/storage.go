@@ -23,7 +23,7 @@ type S3Ops struct {
 
 type initStorageOpts struct {
 	cmd           *cobra.Command
-	storageClient internalAws.S3
+	storageClient *internalAws.S3
 }
 
 func BuildStorageCommand() *cobra.Command {
@@ -59,7 +59,7 @@ func newInitStorageOpts(cmd *cobra.Command) (*initStorageOpts, error) {
 
 	storage := initStorageOpts{
 		cmd:           cmd,
-		storageClient: *internalAws.NewStorage(defaultSess),
+		storageClient: internalAws.NewStorage(defaultSess),
 	}
 
 	return &storage, nil
@@ -73,7 +73,7 @@ func (o *initStorageOpts) Execute() error {
 		return err
 	}
 	if ok {
-		return o.generateStorageYaml(o.cmd)
+		return o.generateStorageYaml()
 	}
 
 	// ファイルを読み込む
@@ -111,7 +111,7 @@ func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) e
 }
 
 // FIXME: リファクタする
-func (o *initStorageOpts) generateStorageYaml(cmd *cobra.Command) error {
+func (o *initStorageOpts) generateStorageYaml() error {
 	var qs = []*survey.Question{
 		{
 			Name:      "storage_name",
