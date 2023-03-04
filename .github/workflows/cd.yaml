@@ -27,8 +27,8 @@ jobs:
           package_name="$formula_name-$formula_version.tar.gz"
           package_sha=$(curl -sL https://github.com/sanoyo/aws-deployer/archive/${{ github.ref }}.tar.gz | shasum -a 256 | awk '{print $1}')
 
-          sed -i '' "s/url.*/url \"https:\/\/github.com\/sanoyo\/aws-deployer\/archive\/${{ github.ref }}.tar.gz\"/" $formula_name.rb
-          sed -i '' "s/sha256.*/sha256 \"$package_sha\"/" $formula_name.rb
+          sed -i '' "s#url.*#url \"https://github.com/username/repo/archive/${{ github.ref }}.tar.gz\"#" $formula_name.rb
+          sed -i '' "s#sha256.*#sha256 \"$package_sha\"#" $formula_name.rb
 
           brew install --build-from-source $formula_name.rb
 
