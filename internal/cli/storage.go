@@ -5,6 +5,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -16,17 +17,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type S3Ops struct {
+type s3Setting struct {
 	Kind       string `yaml:"kind"`
 	BucketName string `yaml:"name"`
 }
 
+type commandOptions struct {
+	yaml         string
+	generateFlag bool
+}
+
 type initStorageOpts struct {
-	cmd           *cobra.Command
 	storageClient *internalAws.S3
+	option        commandOptions
 }
 
 func BuildStorageCommand() *cobra.Command {
+	ops := commandOptions{}
 	stCmd := &cobra.Command{
 		Use:   "storage",
 		Short: "A brief description of your command",
@@ -37,7 +44,7 @@ func BuildStorageCommand() *cobra.Command {
 		This application is a tool to generate the needed files
 		to quickly create a Cobra application.`,
 		RunE: runCmdE(func(cmd *cobra.Command, args []string) error {
-			opts, err := newInitStorageOpts(cmd)
+			opts, err := newInitStorageOpts(ops)
 			if err != nil {
 				return err
 			}
@@ -45,44 +52,48 @@ func BuildStorageCommand() *cobra.Command {
 		}),
 	}
 
-	stCmd.Flags().StringP("yaml", "y", "", "Specify yaml file")
-	stCmd.Flags().BoolP("generate", "g", false, "generate yaml file")
+	stCmd.Flags().StringVar(&ops.yaml, "yaml", "", "Specify yaml file")
+	stCmd.Flags().BoolVar(&ops.generateFlag, "generate", false, "generate yaml file")
 
 	return stCmd
 }
 
-func newInitStorageOpts(cmd *cobra.Command) (*initStorageOpts, error) {
+func newInitStorageOpts(ops commandOptions) (*initStorageOpts, error) {
 	defaultSess, err := internalAws.NewProvider().Default()
 	if err != nil {
 		return nil, err
 	}
 
 	storage := initStorageOpts{
-		cmd:           cmd,
 		storageClient: internalAws.NewStorage(defaultSess),
+		option:        ops,
 	}
 
 	return &storage, nil
 }
 
-func (o *initStorageOpts) Execute() error {
-	ctx := context.TODO()
-
-	ok, err := o.cmd.Flags().GetBool("generate")
-	if err != nil {
-		return err
+func (o *initStorageOpts) Validate() error {
+	// どちらも指定されていない場合
+	if o.option.yaml == "" && !o.option.generateFlag {
+		return errors.New("please specify yaml file or generate flag")
 	}
-	if ok {
+
+	// どちらも指定されている場合
+	if o.option.yaml != "" && o.option.generateFlag {
+		return errors.New("both flags are specified")
+	}
+
+	return nil
+}
+
+func (o *initStorageOpts) Execute() error {
+	// generateオプションが指定されている場合
+	if o.option.generateFlag {
 		return o.generateStorageYaml()
 	}
 
-	// ファイルを読み込む
-	filePath, err := o.cmd.Flags().GetString("yaml")
-	if err != nil {
-		return err
-	}
-
-	return o.createS3Bucket(ctx, filePath)
+	// yamlファイルが指定されている場合
+	return o.createS3Bucket(context.TODO(), o.option.yaml)
 }
 
 func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) error {
@@ -91,8 +102,8 @@ func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) e
 		return err
 	}
 
-	s3Ops := S3Ops{}
-	err = yaml.Unmarshal(b, &s3Ops)
+	ss := s3Setting{}
+	err = yaml.Unmarshal(b, &ss)
 	if err != nil {
 		return err
 	}
@@ -100,7 +111,7 @@ func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) e
 	_, err = o.storageClient.CreateBucketWithContext(
 		ctx,
 		&s3.CreateBucketInput{
-			Bucket: aws.String(s3Ops.BucketName),
+			Bucket: aws.String(ss.BucketName),
 		},
 	)
 	if err != nil {
@@ -110,9 +121,9 @@ func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) e
 	return nil
 }
 
-// FIXME: リファクタする
+// FIXME: リファクタする.
 func (o *initStorageOpts) generateStorageYaml() error {
-	var qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name:      "storage_name",
 			Prompt:    &survey.Input{Message: "Please input storage name?"},
@@ -137,12 +148,12 @@ func (o *initStorageOpts) generateStorageYaml() error {
 		return err
 	}
 
-	s3Ops := S3Ops{
+	ss := s3Setting{
 		Kind:       "S3",
 		BucketName: answers.StorageName,
 	}
 
-	b, err := yaml.Marshal(s3Ops)
+	b, err := yaml.Marshal(ss)
 	if err != nil {
 		return err
 	}
