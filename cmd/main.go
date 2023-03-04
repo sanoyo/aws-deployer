@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/sanoyo/aws-deployer/internal/cli"
+	"github.com/sanoyo/aws-deployer/internal/log"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // rootCmd represents the base command when called without any subcommands.
@@ -22,12 +24,21 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 }
 
+var Logger *zap.Logger
+
 func init() {
+	cobra.OnInitialize(
+		initLogging,
+	)
 	rootCmd.AddCommand(cli.BuildStorageCommand())
 }
 
 func main() {
 	Execute()
+}
+
+func initLogging() {
+	log.NewLogger()
 }
 
 func Execute() {

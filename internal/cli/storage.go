@@ -13,7 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
+	"github.com/sanoyo/aws-deployer/internal/log"
 	"github.com/spf13/cobra"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -69,6 +71,8 @@ func newInitStorageOpts(ops storageCommandOps) (*initStorageOpts, error) {
 		option:        ops,
 	}
 
+	log.Logger.Info("successfully initialized")
+
 	return &storage, nil
 }
 
@@ -97,6 +101,7 @@ func (o *initStorageOpts) Execute() error {
 }
 
 func (o *initStorageOpts) createS3Bucket() error {
+	log.Logger.Info("start to create s3")
 	ctx := context.TODO()
 	b, err := os.ReadFile(o.option.yaml)
 	if err != nil {
@@ -119,11 +124,14 @@ func (o *initStorageOpts) createS3Bucket() error {
 		return err
 	}
 
+	log.Logger.Info("successfully to create s3")
+
 	return nil
 }
 
 // FIXME: リファクタする.
 func (o *initStorageOpts) generateStorageYaml() error {
+	log.Logger.Info("start to generate s3 file")
 	qs := []*survey.Question{
 		{
 			Name:      "storage_name",
@@ -163,6 +171,8 @@ func (o *initStorageOpts) generateStorageYaml() error {
 	if err != nil {
 		return err
 	}
+
+	log.Logger.Info("successfully to generate s3 file")
 
 	return nil
 }
