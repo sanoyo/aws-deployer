@@ -22,18 +22,18 @@ type s3Setting struct {
 	BucketName string `yaml:"name"`
 }
 
-type commandOptions struct {
+type storageCommandOps struct {
 	yaml         string
 	generateFlag bool
 }
 
 type initStorageOpts struct {
 	storageClient *internalAws.S3
-	option        commandOptions
+	option        storageCommandOps
 }
 
 func BuildStorageCommand() *cobra.Command {
-	ops := commandOptions{}
+	ops := storageCommandOps{}
 	stCmd := &cobra.Command{
 		Use:   "storage",
 		Short: "A brief description of your command",
@@ -58,7 +58,7 @@ func BuildStorageCommand() *cobra.Command {
 	return stCmd
 }
 
-func newInitStorageOpts(ops commandOptions) (*initStorageOpts, error) {
+func newInitStorageOpts(ops storageCommandOps) (*initStorageOpts, error) {
 	defaultSess, err := internalAws.NewProvider().Default()
 	if err != nil {
 		return nil, err
@@ -93,11 +93,12 @@ func (o *initStorageOpts) Execute() error {
 	}
 
 	// yamlファイルが指定されている場合
-	return o.createS3Bucket(context.TODO(), o.option.yaml)
+	return o.createS3Bucket()
 }
 
-func (o *initStorageOpts) createS3Bucket(ctx context.Context, filePath string) error {
-	b, err := os.ReadFile(filePath)
+func (o *initStorageOpts) createS3Bucket() error {
+	ctx := context.TODO()
+	b, err := os.ReadFile(o.option.yaml)
 	if err != nil {
 		return err
 	}
