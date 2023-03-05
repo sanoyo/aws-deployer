@@ -31,6 +31,7 @@ func init() {
 		initLogging,
 	)
 	rootCmd.AddCommand(cli.BuildStorageCommand())
+	rootCmd.AddCommand(cli.BuildTaskCommand())
 }
 
 func main() {
