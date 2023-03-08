@@ -1,0 +1,4 @@
+kind: Task
+name: sample
+cluster: sample
+image: sample:1

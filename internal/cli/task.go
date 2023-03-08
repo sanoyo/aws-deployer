@@ -4,6 +4,11 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cli
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ecs"
 	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
 	"github.com/sanoyo/aws-deployer/internal/log"
 	"github.com/spf13/cobra"
@@ -20,8 +25,8 @@ type taskCommandOps struct {
 }
 
 type initTaskOpts struct {
-	storageClient *internalAws.S3
-	option        taskCommandOps
+	taskClient *internalAws.Task
+	option     taskCommandOps
 }
 
 func BuildTaskCommand() *cobra.Command {
@@ -51,15 +56,54 @@ to quickly create a Cobra application.`,
 }
 
 func newInitTaskOpts(ops taskCommandOps) (*initTaskOpts, error) {
-	return nil, nil
+	defaultSess, err := internalAws.NewProvider().Default()
+	if err != nil {
+		return nil, err
+	}
+
+	task := initTaskOpts{
+		taskClient: internalAws.NewTask(defaultSess),
+		option:     ops,
+	}
+
+	log.Logger.Info("successfully initialized")
+
+	return &task, nil
 }
 
 func (o *initTaskOpts) Validate() error {
+	// どちらも指定されていない場合
+	if o.option.yaml == "" && !o.option.generateFlag {
+		return errors.New("please specify yaml file or generate flag")
+	}
+
+	// どちらも指定されている場合
+	if o.option.yaml != "" && o.option.generateFlag {
+		return errors.New("both flags are specified")
+	}
+
 	log.Logger.Info("successfully to validate ecs task")
 	return nil
 }
 
 func (o *initTaskOpts) Execute() error {
+	input := &ecs.RunTaskInput{
+		Cluster:        aws.String("test-cluster"),
+		TaskDefinition: aws.String("test:1"),
+		NetworkConfiguration: &ecs.NetworkConfiguration{
+			AwsvpcConfiguration: &ecs.AwsVpcConfiguration{
+				Subnets: []*string{aws.String("subnet-12345678")},
+			},
+		},
+	}
+
+	result, err := o.taskClient.RunTask(input)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("result", result)
+
 	log.Logger.Info("successfully to create ecs task")
 	return nil
 }
