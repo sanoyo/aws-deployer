@@ -1,4 +1,6 @@
-kind: Task
-name: sample
-cluster: sample
-image: sample:1
+cluster: test-cluster
+name: test:1
+launchType: fargate
+network:
+  subnets:
+    - subnet

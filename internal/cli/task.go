@@ -5,18 +5,25 @@ package cli
 
 import (
 	"errors"
-	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	internalAws "github.com/sanoyo/aws-deployer/internal/aws"
 	"github.com/sanoyo/aws-deployer/internal/log"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 type taskSetting struct {
-	Kind       string `yaml:"kind"`
-	BucketName string `yaml:"name"`
+	Cluster    string  `yaml:"cluster"`
+	Name       string  `yaml:"name"`
+	LaunchType string  `yaml:"launchType"`
+	Network    Network `yaml:"network"`
+}
+
+type Network struct {
+	Subnets []string `yaml:"subnets"`
 }
 
 type taskCommandOps struct {
@@ -87,23 +94,45 @@ func (o *initTaskOpts) Validate() error {
 }
 
 func (o *initTaskOpts) Execute() error {
-	input := &ecs.RunTaskInput{
-		Cluster:        aws.String("test-cluster"),
-		TaskDefinition: aws.String("test:1"),
-		NetworkConfiguration: &ecs.NetworkConfiguration{
-			AwsvpcConfiguration: &ecs.AwsVpcConfiguration{
-				Subnets: []*string{aws.String("subnet-12345678")},
-			},
-		},
-	}
-
-	result, err := o.taskClient.RunTask(input)
+	b, err := os.ReadFile(o.option.yaml)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("result", result)
+	task := taskSetting{}
+	err = yaml.Unmarshal(b, &task)
+	if err != nil {
+		return err
+	}
+
+	_, err = o.taskClient.RunTask(
+		&ecs.RunTaskInput{
+			Cluster:        aws.String(task.Cluster),
+			TaskDefinition: aws.String(task.Name),
+			LaunchType:     aws.String(o.whereLaunchType(task.LaunchType)),
+			NetworkConfiguration: &ecs.NetworkConfiguration{
+				AwsvpcConfiguration: &ecs.AwsVpcConfiguration{
+					Subnets: aws.StringSlice(task.Network.Subnets),
+				},
+			},
+		})
+	if err != nil {
+		return err
+	}
 
 	log.Logger.Info("successfully to create ecs task")
 	return nil
+}
+
+func (o *initTaskOpts) whereLaunchType(lanchType string) string {
+	switch lanchType {
+	case "fargate":
+		return ecs.LaunchTypeFargate
+	case "ec2":
+		return ecs.LaunchTypeEc2
+	case "external":
+		return ecs.LaunchTypeExternal
+	default:
+		return ""
+	}
 }
