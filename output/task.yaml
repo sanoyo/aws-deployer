@@ -1,0 +1,6 @@
+cluster: test-cluster
+name: test:1
+launchType: fargate
+network:
+  subnets:
+    - subnet
